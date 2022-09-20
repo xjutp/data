@@ -1,0 +1,1350 @@
+/**
+ * AVL Tree
+ *
+ * @Description:
+ * Please finish the class "AVL_Tree" and main function to fulfill the requirements.
+ * You can choose to implement your own AVL Tree or inherit from your "BinarySearchTree" or "binarySearchTree".
+ * You can add any function or variable if you want.
+ * Serialize and deserialize rules are the same as the question "Binary Search Tree III".
+ * You must use your own data structure or you will get up to 0 points.
+ *
+ * @Input Description
+ * In each test case, your tree should start from an empty tree.
+ * Each line will contain an operation of the tree till the end-of-file.
+ * There are two types of operations:
+ * 1. insert <data>
+ *  insert data into your tree
+ * 2. delete <data>
+ *  delete data from your tree
+ *
+ * @Output Description
+ * The serialized string of the tree.
+ * Ending with a "\n" of each line.
+ */
+
+#include <bits/stdc++.h>
+#include<windows.h>
+#define bu//g
+#define bug_deSerializ//e
+#define debug_inser//t
+using namespace std;
+string add_i_zero (string v, int d)
+{
+    string tmp="";
+    int x;
+    for (x=0; x < d; x++)
+        tmp.append ("0");
+    tmp.append (v);
+    return tmp;
+}
+string add_zero_d (string v, int i, int f, bool no_dot)
+{
+    if (no_dot)
+    {
+        v.append (".");
+        i ++;
+    }
+    for (; i < f; i++)
+        v.append ("0");
+    return v;
+}
+void add_zero (string *lv, string *rv)
+{
+    int l_dot = lv->find('.'), r_dot = rv->find('.'), dot;
+    if (l_dot == -1)
+        l_dot = lv->size();
+    if (r_dot == -1)
+        r_dot = rv->size();
+    /*******補零*********/
+    if (l_dot > r_dot)// 整數
+    {
+        *rv = add_i_zero (*rv, l_dot-r_dot);
+        dot = l_dot;
+    }
+    else if (l_dot < r_dot)
+    {
+        *lv = add_i_zero (*lv, r_dot-l_dot);
+        dot = r_dot;
+    }
+    else
+        dot = l_dot;
+    if (lv->size() > rv->size())//小數
+        *rv = add_zero_d (*rv, rv->size(), lv->size(), rv->size() == dot);
+    else if (lv->size() < rv->size())
+        *lv = add_zero_d (*lv, lv->size(), rv->size(), lv->size() == dot);
+}
+int VS_string (string lv, string rv)
+{
+    if (lv != "" && lv[0] >= 48 && lv[0] <= 57 && rv != "" && rv[0] >= 48 && rv[0] <= 57)
+        add_zero (&lv, &rv);
+    int x, ll=lv.size(), rl=rv.size();
+    for (x=0; x < ll && x < rl && lv[x] == rv[x] ; x++);
+    if (x == ll && x == rl)
+        return 0;
+    else if (x == ll)
+        return -1;
+    else if (x == rl)
+        return 1;
+    else if (lv[x] < rv[x])
+        return -1;
+    else if (lv[x] > rv[x])
+        return 1;
+}
+
+template<class T>
+class Node
+{
+private:
+    Node<T> *prev;
+    Node<T> *next;
+    T data;
+public:
+    Node(): data(0), prev(NULL), next(NULL) {}
+    Node(T _data): data(_data), prev(NULL), next(NULL) {}
+    Node(T _data, Node<T> *_prev, Node<T> *_next): data(_data), prev(_prev), next(_next) {}
+    //Node (Node<T> *o): data(o->data), next(o->next), prev(o->prev) {}
+    T get_data () const
+    {
+        return data;
+    }
+    void set_data (T d)
+    {
+        data = d;
+    }
+    Node<T> *get_prev () const
+    {
+        return (Node<T> *)prev;
+    }
+    void set_prev (Node<T> *p)
+    {
+        prev = p;
+    }
+    Node<T> *get_next () const
+    {
+        return (Node<T> *)next;
+    }
+    void set_next (Node<T> *n)
+    {
+        next = n;
+    }
+    void show () const
+    {
+        cout << "data: "<<data<<endl;
+        if (prev != NULL)
+            cout<<"prev: "<<prev<<endl;
+        else
+            cout<<"prev: NULL"<<endl;
+        if (next != NULL)
+            cout<<"next: "<<next<<endl;
+        else
+            cout<<"next: NULL"<<endl;
+    }
+};
+template<class T>
+class LinkedList
+{
+private:
+    Node<T> *head;
+    Node<T> *tail;
+    int many;
+public:
+    LinkedList(): head(NULL), tail(NULL), many(0) {}
+    LinkedList(T d): head(NULL), tail(NULL), many(0)
+    {
+        addToHead (d);
+    }
+    Node<T> * addToTail(T d)
+    {
+        Node<T> *tmp = new Node<T>(d);
+        many ++;
+        if (tail == NULL)
+        {
+            head = tail = tmp;
+            return tmp;
+        }
+        tail->set_next(tmp);
+        tmp->set_prev(tail);
+        tail = tmp;
+        return tmp;
+    }
+    Node<T> * addToHead(T d)
+    {
+        Node<T> *tmp = new Node<T>(d);
+        many ++;
+        if (head == NULL)
+        {
+            tail = head = tmp;
+            return tmp;
+        }
+        head->set_prev(tmp);
+        tmp->set_next(head);
+        head = tmp;
+        return tmp;
+    }
+    Node<T> * addToNext (Node<T> *at, T d)
+    {
+        if (at == NULL)
+            return NULL;
+        Node<T> *tmp;
+        for (tmp=head; tmp != NULL && tmp != at; tmp = tmp->get_next());
+        if (tmp == NULL) //不在串列中
+            return NULL;
+        if (tmp == tail) //沒有後一個
+            return addToTail(d);
+        tmp = new Node<T>(d);
+        tmp->set_prev(at);
+        tmp->set_next(at->get_next());
+        at->set_next(tmp);
+        (tmp->get_next())->set_prev(tmp);
+        many ++;
+        return tmp;
+    }
+    Node<T> *deleteFromHead ()
+    {
+#ifdef bug_link_delete
+        printf ("~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n");
+        printf ("in deleteFromHead\n\n");
+#endif // bug_link_delete
+        if (head == NULL) //沒東西可刪
+            return NULL;
+        Node<T> *tmp = head;
+#ifdef bug_link_delete
+        printf ("--> tmp = head\ntmp: ");
+        cout<<tmp->get_data()<<endl;
+        printf ("   tmp->get_data()->show():\n");
+        tmp->get_data()->show();
+        printf ("\n\n");
+#endif // bug_link_delete
+        head = head->get_next();
+#ifdef bug_link_delete
+        printf ("--> head = head->get_next()\nhead: ");
+        if (head == NULL)
+            cout << "NULL\n";
+        else
+            cout<<tmp->get_data()<<endl;
+#endif // bug_link_delete
+        tmp->set_next(NULL);
+        if (head == NULL) //刪的是最後一個
+        {
+            tail = NULL;
+            many --;
+            return tmp;
+        }
+        head->set_prev(NULL);
+        many --;
+        return tmp;
+    }
+    Node<T> *deleteFromTail ()
+    {
+#ifdef bug_link_delete
+        printf ("-------------------\n");
+        printf ("in deleteFromTail\n\n");
+#endif // bug_link_delete
+        if (tail == NULL)
+            return NULL;
+        Node<T> *tmp = tail;
+#ifdef bug_link_delete
+        printf ("--> tmp = tail\ntmp: ");
+        cout<<tmp->get_data()<<endl;
+        printf ("   tmp->get_data()->show():\n");
+        tmp->get_data()->show();
+        printf ("\n\n");
+#endif // bug_link_delete
+        tail = tail->get_prev();
+#ifdef bug_link_delete
+        printf ("--> tail = tail->get_prev()\ntail: ");
+        if (tail == NULL)
+            cout << "NULL\n";
+        else
+            cout<<tmp->get_data()<<endl;
+#endif // bug_link_delete
+        tmp->set_prev(NULL);
+        if (tail == NULL)
+        {
+            head = NULL;
+            many --;
+            return tmp;
+        }
+        tail->set_next(NULL);
+        many --;
+        return tmp;
+    }
+    Node<T> *deleteFromMiddle (Node<T> *at)
+    {
+        Node<T> *tmp;
+        for (tmp=head; tmp->get_next() != NULL && tmp->get_next() != at; tmp = tmp->get_next());
+        if (tmp->get_next() == NULL) //不在串列中
+            return NULL;
+        tmp->set_next(at->get_next());
+        (at->get_next())->set_prev(tmp);
+        at->set_prev(NULL);
+        at->set_next(NULL);
+        many --;
+        return at;
+    }
+    Node<T> * deleteData(T d)
+    {
+#ifdef bug_link_delete
+        printf (".....................\n");
+        printf ("\tin delete (T d)\n\nd: ");
+        cout << d << endl;
+#endif // bug_link_delete
+        Node<T> *tmp;
+        for (tmp = head; tmp != NULL && tmp->get_data() != d; tmp = tmp->get_next());
+#ifdef bug_link_delete
+        if (tmp == NULL)
+            printf ("tmp: NULL\n");
+        else
+        {
+            printf ("find tmp->get_data()->show(): \n");
+            tmp->get_data()->show();
+            printf ("\n\n");
+        }
+#endif // bug_link_delete
+        if (tmp != NULL)
+        {
+            if (tmp == head)
+                return deleteFromHead();
+            else if (tmp == tail)
+                return deleteFromTail();
+            else
+                return deleteFromMiddle(tmp);
+        }
+#ifdef bug_link_delete
+        printf ("\tout delete (T d)\n\n");
+        printf (".....................\n");
+#endif // bug_link_delete
+        return NULL;
+    }
+    void deleteData(T d, int n)
+    {
+        Node<T> *tmp = head, *at;
+        while (n > 0 && tmp != NULL)
+        {
+            for (; tmp != NULL && tmp->get_data() != d; tmp = tmp->get_next());
+            if (tmp != NULL)
+            {
+                at = tmp;
+                tmp = tmp->get_next();
+                if (at == head)
+                    deleteFromHead();
+                else if (at == tail)
+                    deleteFromTail();
+                else
+                    deleteFromMiddle(at);
+                n--;
+            }
+        }
+    }
+    Node<T> *get_head () const
+    {
+        return (Node<T> *)head;
+    }
+    Node<T> *get_tail () const
+    {
+        return (Node<T> *)tail;
+    }
+    friend std::ostream &operator<<(std::ostream &out, LinkedList * n)
+    {
+        Node<T> *tmp;
+        out << "(";
+        for (tmp=n->get_head(); tmp != n->get_tail() ; tmp = tmp->get_next())
+            out << tmp->get_data()<<", ";
+        out << tmp->get_data()<< ")\n";
+        return out;
+    }
+    int get_many () const
+    {
+        return many;
+    }
+
+};
+template<class T>
+class Queue
+{
+private:
+    LinkedList<T> *list;
+public:
+    Queue()
+    {
+        list = new LinkedList<T>;
+    }
+    void enqueue(T data)
+    {
+        list->addToTail(data);
+    }
+    T dequeue()
+    {
+        if (list->get_head() != NULL)
+            return list->deleteFromHead()->get_data();
+    }
+    T front()
+    {
+        if (list->get_head() != NULL)
+            return list->get_head()->get_data();
+    }
+    bool isEmpty()
+    {
+        if (list->get_head() == NULL) //全空的情況下頭尾指標才會空
+            return true;
+        return false;
+    }
+};
+template<class T>
+class Stack
+{
+private:
+    LinkedList<T> *list;
+public:
+    Stack()
+    {
+        list = new LinkedList<T>;
+    }
+    void push(T data)
+    {
+        list->addToTail(data);
+    }
+    T pop()
+    {
+        if (list->get_tail() != NULL)
+            return list->deleteFromTail()->get_data();
+    }
+    T top()
+    {
+        if (list->get_tail() != NULL)
+            return list->get_tail()->get_data();
+    }
+    bool isEmpty()
+    {
+        if (list->get_tail() == NULL)
+            return true;
+        return false;
+    }
+    int size()
+    {
+        return list->get_many();
+    }
+};
+
+template<class T>
+class TreeNode
+{
+private:
+    int level;
+    T data;
+    TreeNode<T> *left;
+    TreeNode<T> *right;
+public:
+    TreeNode(T d, int l=0): data(d), level(l), left(NULL), right(NULL) {}
+    T get_data () const
+    {
+        return data;
+    }
+    void set_data (T d)
+    {
+        data = d;
+    }
+    int get_level () const
+    {
+        return level;
+    }
+    void set_level (int l)
+    {
+        level = l;
+    }
+    TreeNode<T> *&get_left () const
+    {
+        return (TreeNode<T> *&)left;
+    }
+    void set_left (TreeNode<T> *l)
+    {
+        left = l;
+    }
+    TreeNode<T> *&get_right () const
+    {
+        return (TreeNode<T> *&)right;
+    }
+    void set_right (TreeNode<T> *r)
+    {
+        right = r;
+    }
+    void show () const
+    {
+        cout << "data: "<<data<<"\n";
+        cout << "level: "<<level<<"\n";
+        cout << "left: "<<left<<"\n";
+        cout << "right: "<<right<<"\n";
+    }
+};
+
+template<class T>
+class binarySearchTree
+{
+protected:
+    TreeNode<T> *root;
+public:
+    virtual void inorder() = 0;
+    virtual void preorder() = 0;
+    virtual void postorder() = 0;
+    virtual void levelorder() = 0;
+    virtual string serialize() = 0;
+    virtual bool insert(T data) = 0;
+    virtual void setRoot(T data) = 0;
+    //virtual bool serach(T target) = 0;
+    virtual void deSerialize(string tree) = 0;
+};
+
+template<class T>
+class AVL_Tree: public binarySearchTree<T>
+{
+    int many;
+    int max_level;
+    //不用遞迴的話，也可以用stack
+    //pre 一個，post 兩個
+    void TLR (TreeNode<T> *n, int *m)
+    {
+        cout << n->get_data();
+        (*m) ++;
+        //printf ("m: %d\n", *m);
+        if (*m != many)
+            cout << ",";
+        else
+            cout << "\n";
+        if (n->get_left() != NULL)
+            TLR (n->get_left(), m);
+        if (n->get_right() != NULL)
+            TLR (n->get_right(), m);
+    }
+    void LTR (TreeNode<T> *n, int *m)
+    {
+        if (n->get_left() != NULL)
+            LTR (n->get_left(), m);
+        cout << n->get_data();
+        (*m) ++;
+        //printf ("m: %d\n", *m);
+        if (*m != many)
+            cout << ",";
+        else
+            cout << "\n";
+        if (n->get_right() != NULL)
+            LTR (n->get_right(), m);
+    }
+    void LRT (TreeNode<T> *n, int *m)
+    {
+        if (n->get_left() != NULL)
+            LRT (n->get_left(), m);
+        if (n->get_right() != NULL)
+            LRT (n->get_right(), m);
+        cout << n->get_data();
+        (*m) ++;
+        //printf ("m: %d\n", *m);
+        if (*m != many)
+            cout << ",";
+        else
+            cout << "\n";
+    }
+    void _display (TreeNode<T> *r, int d)
+    {
+        if (r == NULL)
+            return;
+        _display (r->get_right(), d+1);
+        int x;
+        for (x=0; x < d; x ++)
+            cout << "   ";
+        cout << r->get_data()<<endl;
+        _display (r->get_left(), d+1);
+    }
+    TreeNode<T> *rotate_left (TreeNode<T> *n)
+    {
+        //無判斷n在不在樹上
+        if (this->root == NULL || n == NULL)
+            return NULL;
+        if (n->get_right() == NULL) // 右邊沒東西可以左轉
+            return n;
+        TreeNode<T> *p = get_parent (this->root, n);
+        TreeNode<T> *nr = n->get_right();
+        TreeNode<T> *nrl = n->get_right()->get_left();
+        if (p == NULL) // 沒有父親 --> 根節點
+            this->root = nr;
+        else
+        {
+            if (p->get_left() == n)
+                p->set_left (nr);
+            else
+                p->set_right (nr);
+        }
+        nr->set_left (n);
+        nr->set_level (nr->get_level() - 1);
+        n->set_right (nrl);
+        n->set_level (n->get_level() + 1);
+        return nr;
+    }
+    TreeNode<T> *rotate_right (TreeNode<T> *n)
+    {
+        //無判斷n在不在樹上
+        if (this->root == NULL || n == NULL)
+            return NULL;
+        if (n->get_left() == NULL) // 左邊沒東西可以右轉
+            return n;
+        TreeNode<T> *p = get_parent (this->root, n);
+        TreeNode<T> *nl = n->get_left();
+        TreeNode<T> *nlr = n->get_left()->get_right();
+        if (p == NULL)
+            this->root = nl;
+        else
+        {
+            if (p->get_left() == n)
+                p->set_left (nl);
+            else
+                p->set_right (nl);
+        }
+        nl->set_right (n);
+        nl->set_level (nl->get_level() - 1);
+        n->set_left (nlr);
+        n->set_level (n->get_level() + 1);
+        return nl;
+    }
+    int get_height (TreeNode<T> *n)
+    {
+        if (n == NULL)
+            return -1;
+        //if (n->get_left() == NULL && n->get_right() == NULL)
+        //    return 0;
+        int l, r;
+        l = get_height (n->get_left());
+        r = get_height (n->get_right());
+        if (l > r)
+            return l + 1;
+        else
+            return r + 1;
+    }
+    TreeNode<T> *get_parent (TreeNode<T> *p, TreeNode<T> *n)
+    {
+        if (p == NULL || n == NULL || p == n)
+            return NULL;
+        if (p->get_left() == n || p->get_right() == n)
+            return p;
+        TreeNode<T> *tmp = get_parent (p->get_left(), n);
+        if (tmp != NULL)
+            return tmp;
+        return get_parent (p->get_right(), n);
+    }
+    int size (TreeNode<T> *n)
+    {
+        if (n == NULL)
+            return 0;
+        return 1 + size(n->get_left()) + size(n->get_right());
+    }
+    void balance_h_l (TreeNode<T> **n)
+    {
+        if ((*n) == NULL)
+            return;
+        while (size ((*n)->get_left()) < size ((*n)->get_right())) //左少於右，左轉 (先拉成單線)
+        {
+            while ((*n)->get_right() != NULL && (*n)->get_right()->get_left() != NULL)
+                rotate_right ((*n)->get_right());
+            (*n) = rotate_left ((*n));
+        }
+        while (size ((*n)->get_left()) > size ((*n)->get_right()) + 1)
+        {
+            while ((*n)->get_left() != NULL && (*n)->get_left()->get_right() != NULL)
+                rotate_left ((*n)->get_left());
+            (*n) = rotate_right ((*n));
+        }
+        balance_h_l (&((*n)->get_left()));
+        balance_h_l (&((*n)->get_right()));
+    }
+    void balance_l_h (TreeNode<T> *n)
+    {
+        if (n == NULL)
+            return;
+        int lh, rh, dh;
+        lh = get_height (n->get_left());
+        rh = get_height (n->get_right());
+        dh = lh - rh;
+        if (dh > 1)
+        {
+            if (get_height (n->get_left()->get_right()) - get_height (n->get_left()->get_left()) == 1) //一樣 使一次旋轉只移一個節點
+                rotate_left (n->get_left());
+            n = rotate_right (n);
+        }
+        else if (dh < -1)
+        {
+            if (get_height (n->get_right()->get_left()) - get_height (n->get_right()->get_right()) == 1)
+                rotate_right (n->get_right());
+            n = rotate_left (n);
+        }
+        balance_l_h (get_parent (this->root, n));
+    }
+public:
+    AVL_Tree(): many(0), max_level(0)
+    {
+        this->root = NULL;
+    }
+    ~AVL_Tree()
+    {
+        if (this->root != NULL)
+        {
+            queue<TreeNode<T> *> q;
+            TreeNode<T> *tmp;
+            q.push (this->root);
+            while (!q.empty())
+            {
+                if (q.front()->get_left() != NULL)
+                    q.push (q.front()->get_left());
+                if (q.front()->get_right() != NULL)
+                    q.push (q.front()->get_right());
+                tmp = q.front();
+                q.pop();
+                delete tmp;
+            }
+        }
+    }
+    void preorder()
+    {
+        if (this->root == NULL)
+        {
+            cout << "\n";
+            return;
+        }
+        int m=0;
+        TLR (this->root, &m);
+    }
+    void inorder()
+    {
+        if (this->root == NULL)
+        {
+            cout << "\n";
+            return;
+        }
+        int m=0;
+        LTR (this->root, &m);
+    }
+    void postorder()
+    {
+        if (this->root == NULL)
+        {
+            cout << "\n";
+            return;
+        }
+        int m=0;
+        LRT (this->root, &m);
+    }
+    void levelorder()
+    {
+        if (this->root == NULL)
+        {
+            cout << "\n";
+            return;
+        }
+        queue<TreeNode<T> *> q;
+        q.push (this->root);
+        cout<<q.front()->get_data();
+        if (q.front()->get_left() != NULL)
+            q.push (q.front()->get_left());
+        if (q.front()->get_right() != NULL)
+            q.push (q.front()->get_right());
+        q.pop();
+        while (!q.empty())
+        {
+            cout<<","<<q.front()->get_data();
+            if (q.front()->get_left() != NULL)
+                q.push (q.front()->get_left());
+            if (q.front()->get_right() != NULL)
+                q.push (q.front()->get_right());
+            q.pop();
+        }
+        cout << "\n";
+    }
+    bool insert(T data)
+    {
+#ifdef debug_insert
+        printf ("           in insert\n");
+#endif // debug_insert
+        if (this->root == NULL)
+        {
+            setRoot (data);
+            return true;
+        }
+        if (serach (data))
+            return false;
+        TreeNode<T> *tmp = this->root, *n = new TreeNode<T>(data);
+        while (1)
+        {
+            if (VS_string (tmp->get_data(), data) < 0)
+            {
+                if (tmp->get_right() == NULL)
+                {
+                    n->set_level (tmp->get_level()+1);
+                    tmp->set_right(n);
+                    if (n->get_level() > max_level)
+                        max_level = n->get_level();
+                    many ++;
+#ifdef debug_insert
+                    printf ("the data:\n");
+                    n->show();
+                    printf ("insert data: (");
+                    cout << tmp->get_data();
+                    printf (") right\n\n");
+#endif // debug_insert
+                    balance_l_h (n);
+                    return true;
+                }
+                tmp = tmp->get_right();
+            }
+            else // == 前面被serach判斷掉了
+            {
+                if (tmp->get_left() == NULL)
+                {
+                    n->set_level (tmp->get_level()+1);
+                    tmp->set_left(n);
+                    if (n->get_level() > max_level)
+                        max_level = n->get_level();
+                    many ++;
+#ifdef debug_insert
+                    printf ("the data:\n");
+                    n->show();
+                    printf ("insert data: %d left\n\n", tmp->get_data());
+#endif // debug_insert
+                    balance_l_h (n);
+                    return true;
+                }
+                tmp = tmp->get_left();
+            }
+        }
+    }
+    TreeNode<T> *remove (T data)
+    {
+        //題目規則
+        //刪根節點的時候，取小於且最接近的(左子樹的最右邊的葉子)
+        //如果沒有，應該就是大於且最接近的
+        TreeNode<T> *n =  serach (data);
+        if (n == NULL)
+            return NULL;
+
+        if (n->get_left() == NULL && n->get_right() == NULL) // 刪葉
+        {
+            if (n == this->root)
+                this->root = NULL;
+            else
+            {
+                TreeNode<T> *np = get_parent(this->root, n);
+                if (np->get_left() == n)
+                    np->set_left (NULL);
+                else
+                    np->set_right (NULL);
+                balance_l_h (np);
+            }
+            return n;
+        }
+        TreeNode<T> *tmp; //拿來替補的節點
+        if (n->get_left() != NULL) //左空
+        {
+            tmp = n->get_left();
+            while (tmp->get_right() != NULL)
+                tmp = tmp->get_right();
+            if (tmp == n->get_left()) //沒找到->拿tmp遞補
+            {
+                rotate_right (n);
+                tmp->set_right (n->get_right());
+                n->set_right (NULL);
+                balance_l_h (tmp);
+                return n;
+            }
+        }
+        else //那右邊一定有 (皆空上面判斷掉了)
+        {
+            tmp = n->get_right();
+            while (tmp->get_left() != NULL)
+                tmp = tmp->get_left();
+            if (tmp == n->get_right())
+            {
+                rotate_left (n);
+                tmp->set_left (n->get_left());
+                n->set_left (NULL);
+                balance_l_h (tmp);
+                return n;
+            }
+        }
+        TreeNode<T> *lp = get_parent (this->root, tmp);
+        if (lp->get_left() == tmp) //拔除
+            lp->set_left (NULL);
+        else
+            lp->set_right (NULL);
+
+        if (n == this->root) //根
+            this->root = tmp;
+        else
+        {
+            TreeNode<T> *np = get_parent (this->root, n);
+            if (np->get_left() == n)
+                np->set_left (tmp);
+            else
+                np->set_right (tmp);
+        }
+        tmp->set_left (n->get_left());
+        tmp->set_right (n->get_right());
+        n->set_left (NULL);
+        n->set_right (NULL);
+        balance_l_h (lp);
+        return n;
+    }
+    /*TreeNode<T> *remove (T data)
+    {
+        TreeNode<T> *n = serach (data);
+        if (n == NULL)
+            return NULL;
+        if (n == this->root) //根
+        {
+            if (n->get_left() == NULL && n->get_right() == NULL) //只剩一個節點 --> 直接刪
+            {
+                this->root = NULL;
+            }
+            else if (n->get_right() != NULL) //優先拿右子樹遞補
+            {
+                while (n->get_right() != NULL && n->get_right()->get_left() != NULL)
+                    rotate_right (n->get_right());
+                this->root = rotate_left (n);
+                this->root->set_left (n->get_left());
+                n->set_left (NULL);
+            }
+            else //拿左子樹遞補
+            {
+                while (n->get_left() != NULL && n->get_left()->get_right() != NULL)
+                    rotate_left (n->get_left());
+                this->root = rotate_right (n);
+                this->root->set_right (n->get_right());
+                n->set_right (NULL);
+            }
+        }
+        else
+        {
+            TreeNode<T> *p = get_parent (this->root, n);
+            if (p->get_left() == n)
+            {
+                if (n->get_left() == NULL && n->get_right() == NULL) //只剩一個節點 --> 直接刪
+                {
+                    p->get_left() = NULL;
+                }
+                else if (n->get_right() != NULL) //優先拿右子樹遞補
+                {
+                    while (n->get_right() != NULL && n->get_right()->get_left() != NULL)
+                        rotate_right (n->get_right());
+                    p->get_left() = rotate_left (n);
+                    p->get_left()->set_left (n->get_left());
+                    n->set_left (NULL);
+                }
+                else //拿左子樹遞補
+                {
+                    while (n->get_left() != NULL && n->get_left()->get_right() != NULL)
+                        rotate_left (n->get_left());
+                    p->get_left() = rotate_right (n);
+                    p->get_left()->set_right (n->get_right());
+                    n->set_right (NULL);
+                }
+            }
+            else
+            {
+                if (n->get_left() == NULL && n->get_right() == NULL) //只剩一個節點 --> 直接刪
+                {
+                    p->get_right() = NULL;
+                }
+                else if (n->get_right() != NULL) //優先拿右子樹遞補
+                {
+                    while (n->get_right() != NULL && n->get_right()->get_left() != NULL)
+                        rotate_right (n->get_right());
+                    p->get_right() = rotate_left (n);
+                    p->get_right()->set_left (n->get_left());
+                    n->set_left (NULL);
+                }
+                else //拿左子樹遞補
+                {
+                    while (n->get_left() != NULL && n->get_left()->get_right() != NULL)
+                        rotate_left (n->get_left());
+                    p->get_right() = rotate_right (n);
+                    p->get_right()->set_right (n->get_right());
+                    n->set_right (NULL);
+                }
+            }
+        }
+        balance_h_l (&(this->root));
+        return n;
+    }*/
+    void setRoot(T data)
+    {
+        this->root = new TreeNode<T>(data, 1);
+        many ++;
+        max_level = 1;
+    }
+    TreeNode<T> *serach (T target)
+    {
+        if (this->root == NULL)
+            return NULL;
+        TreeNode<T> *tmp = this->root;
+        while (tmp != NULL)
+        {
+            if (tmp->get_data() == target)
+                return tmp;
+            else if (VS_string (tmp->get_data(), target) < 0)
+                tmp = tmp->get_right();
+            else if (VS_string (tmp->get_data(), target) > 0)
+                tmp = tmp->get_left();
+        }
+        return NULL;
+    }
+    /* void deSerialize (string tree)  //data數字
+     {
+         stringstream ss;
+         int x, add;
+         char c;
+         ss.str ("");
+         ss.clear ();
+         for (x=0; x < tree.size() && tree[x] != '\0' ; x++)
+             if (tree[x] == 'N')
+             {
+                 tree.erase (x-1, 5);
+                 x --;
+             }
+         for (x=0; x < tree.size() && ((tree[x] >= '0' && tree[x] <= '9') || tree[x] == ',') ; x++);
+         if (x != tree.size())
+             throw invalid_argument ("");
+         ss << tree;
+         while (ss >> add)
+         {
+             insert (add);
+             ss >> c;
+         }
+     }
+     */
+    void deSerialize (string tree)
+    {
+#ifdef bug_deSerialize
+        printf ("\tin deSerialize\ntree: ");
+        cout << tree << "\n\n";
+#endif // bug_deSerialize
+        if (tree == "")
+            return;
+        if (tree.find (',') == -1)
+        {
+            setRoot (tree);
+            return;
+        }
+        Queue<TreeNode<T> *> q;
+        Queue<T> d;
+        TreeNode<T> *tmp, *nn;
+        string data="", v="";
+        int x, l=tree.size();
+        bool null=true;
+
+        for (x=0; x < l; x ++)
+        {
+            if (tree[x] == ',')
+            {
+                if (data == "NULLL")
+                    throw invalid_argument ("");
+#ifdef bug_deSerialize
+                printf ("data: ");
+                cout << data << "\n\n";
+#endif // bug_deSerialize
+                d.enqueue (data);
+                data = "";
+                continue;
+            }
+            v = tree[x];
+            data.insert (data.size(), v);
+        }
+#ifdef bug_deSerialize
+        printf ("data: ");
+        cout << data << "\n\n";
+#endif // bug_deSerialize
+        d.enqueue (data);
+        setRoot (d.dequeue());
+        q.enqueue (this->root);
+        while (!d.isEmpty())
+        {
+            if (q.isEmpty())
+                throw invalid_argument ("");
+            if (d.front() == "NULL" && q.front()->get_left() == NULL && null)
+            {
+                null = false;
+                d.dequeue();
+                continue;
+            }
+            else if (d.front() == "NULL" && (q.front()->get_left() != NULL || !null))
+            {
+                q.dequeue();
+                d.dequeue();
+                null = true;
+                continue;
+            }
+            nn = new TreeNode<T> (d.dequeue());
+            q.enqueue (nn);
+            if (q.front()->get_left() == NULL && null)
+                q.front()->set_left (nn);
+            else
+                q.front()->set_right (nn);
+            nn->set_level (q.front()->get_level() + 1);
+            if (nn->get_level() > max_level)
+                max_level = nn->get_level();
+            many ++;
+            if ((q.front()->get_left() != NULL || !null) && q.front()->get_right() != NULL)
+            {
+                q.dequeue();
+                null = true;
+            }
+        }
+    }
+    string serialize()
+    {
+#ifdef serialize_stack
+        printf ("           in serialize\n");
+#endif // serialize_stack
+        if (this->root == NULL)
+            return "NULL";
+        string tree="", v="";
+        stringstream ss;
+        queue<TreeNode<T> *> q;
+        stack<string> s;
+
+        q.push (this->root);
+        ss.str (""), ss.clear();
+        ss << q.front()->get_data();
+        ss >> v;
+        s.push (v);
+#ifdef serialize_stack
+        printf ("push (");
+        cout << v;
+        printf (") in stack\n");
+#endif // serialize_stack
+        if (q.front()->get_left() != NULL)
+        {
+            q.push (q.front()->get_left());
+            ss.str (""), ss.clear();
+            ss << q.front()->get_left()->get_data();
+            ss >> v;
+            s.push (v);
+#ifdef serialize_stack
+            printf ("push (");
+            cout << v;
+            printf (") in stack\n");
+#endif // serialize_stack
+        }
+        else
+        {
+            s.push ("NULL");
+#ifdef serialize_stack
+            printf ("push (");
+            cout << NULL;
+            printf (") in stack (%d left)\n", q.front()->get_data());
+#endif // serialize_stack
+        }
+        if (q.front()->get_right() != NULL)
+        {
+            q.push (q.front()->get_right());
+            ss.str (""), ss.clear();
+            ss << q.front()->get_right()->get_data();
+            ss >> v;
+            s.push (v);
+#ifdef serialize_stack
+            printf ("push (");
+            cout << v;
+            printf (") in stack\n");
+#endif // serialize_stack
+        }
+        else
+        {
+            s.push ("NULL");
+#ifdef serialize_stack
+            printf ("push (");
+            cout << NULL;
+            printf (") in stack (%d right)\n", q.front()->get_data());
+#endif // serialize_stack
+        }
+        if (q.front()->get_left() == NULL && q.front()->get_right() == NULL && q.front()->get_level() == max_level)
+        {
+            s.pop(), s.pop();
+#ifdef serialize_stack
+            printf ("pop (");
+            cout << NULL;
+            printf (") out stack (%d)\n", q.front()->get_data());
+            printf ("pop (");
+            cout << NULL;
+            printf (") out stack (%d)\n", q.front()->get_data());
+#endif // serialize_stack
+        }
+        q.pop();
+        while (!q.empty())
+        {
+            /*  ss.str (""), ss.clear();
+              ss << q.front()->get_data();
+              ss >> v;
+              s.push (v);
+            #ifdef serialize_stack
+              printf ("push (");
+              cout << v;
+              printf (") in stack\n");
+            #endif // serialize_stack*/
+            if (q.front()->get_left() != NULL)
+            {
+                q.push (q.front()->get_left());
+                ss.str (""), ss.clear();
+                ss << q.front()->get_left()->get_data();
+                ss >> v;
+                s.push (v);
+#ifdef serialize_stack
+                printf ("push (");
+                cout << v;
+                printf (") in stack\n");
+#endif // serialize_stack
+            }
+            else
+            {
+                s.push ("NULL");
+#ifdef serialize_stack
+                printf ("push (");
+                cout << NULL;
+                printf (") in stack (%d left)\n", q.front()->get_data());
+#endif // serialize_stack
+            }
+            if (q.front()->get_right() != NULL)
+            {
+                q.push (q.front()->get_right());
+                ss.str (""), ss.clear();
+                ss << q.front()->get_right()->get_data();
+                ss >> v;
+                s.push (v);
+#ifdef serialize_stack
+                printf ("push (");
+                cout << v;
+                printf (") in stack\n");
+#endif // serialize_stack
+            }
+            else
+            {
+                s.push ("NULL");
+#ifdef serialize_stack
+                printf ("push (");
+                cout << NULL;
+                printf (") in stack (%d right)\n", q.front()->get_data());
+#endif // serialize_stack
+            }
+            if (q.front()->get_left() == NULL && q.front()->get_right() == NULL && q.front()->get_level() == max_level)
+            {
+                s.pop(), s.pop();
+#ifdef serialize_stack
+                printf ("pop (");
+                cout << NULL;
+                printf (") out stack (%d)\n", q.front()->get_data());
+                printf ("pop (");
+                cout << NULL;
+                printf (") out stack (%d)\n", q.front()->get_data());
+#endif // serialize_stack
+            }
+            q.pop();
+        }
+        for (tree=s.top(), s.pop(); !s.empty() ; s.pop())
+        {
+            tree.insert (0, ",");
+            v = s.top();
+            tree.insert (0, v);
+        }
+        while (tree[tree.size()-1] == 'L')
+            tree.erase (tree.size()-5);
+        return tree;
+    }
+    void display ()
+    {
+        _display (this->root, 0);
+    }
+    bool isValidSerialization (string tree)
+    {
+        int x, l = tree.size();
+        for (x=0; x < l; x++)
+            if (tree[x] == ' ') //有空格
+                return false;
+        if (tree[x-1] == ',') //結尾多逗號
+            return false;
+        try
+        {
+            this->deSerialize (tree);
+        }
+        catch (...)
+        {
+            return false;
+        }
+        return true;
+    }
+    bool isValidBinarySearchTree (string tree)
+    {
+        AVL_Tree<string> *bst_t = new AVL_Tree<string> ();
+        string data="", v="";
+        int x, l=tree.size();
+
+        for (x=0; x < l; x ++)
+        {
+            if (tree[x] == ',')
+            {
+                if (data !="NULL")
+                    bst_t->insert (data);
+                data = "";
+                continue;
+            }
+            v = tree[x];
+            data.insert (data.size(), v);
+        }
+        bst_t->insert (data);
+#ifdef bug
+        bst_t->display();
+        printf ("*********************\n");
+#endif // bug
+        if (VS_tree (bst_t))
+        {
+            delete bst_t;
+            return true;
+        }
+        delete bst_t;
+        return false;
+    }
+    bool VS_tree (AVL_Tree *o)
+    {
+        if (VS_string (this->serialize(), o->serialize()) == 0)
+            return true;
+        return false;
+    }
+};
+
+
+int main ()
+{
+    AVL_Tree<string> *bst_q = new AVL_Tree<string> ();
+    string question = "";
+    int x, l;
+
+
+    while (cin >> question)
+    {
+        if (question == "insert")
+        {
+            cin >> question;
+            bst_q->insert (question);
+#ifdef bug
+            bst_q->display();
+            printf ("**********************\n");
+#endif // bug
+        }
+        else if (question == "delete")
+        {
+            cin >> question;
+            bst_q->remove (question);
+#ifdef bug
+            bst_q->display();
+            printf ("**********************\n");
+#endif // bug
+        }
+    }
+    cout << bst_q->serialize() << endl;
+    delete bst_q;
+    return 0;
+}
+
+
