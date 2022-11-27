@@ -1,0 +1,338 @@
+
+/**
+ * Binary Search Tree I
+ *
+ * @Description:
+ * Please finish the class "BinarySearchTree"
+ * You can add any function or variable if you want.
+ *
+ * @Input Description
+ * NONE
+ *
+ * @Output Description
+ * NONE
+ */
+
+#include <iostream>
+#include <string>
+#include<queue>
+using namespace std;
+
+/**
+ * A TreeNode class of binarySearchTree class
+ */
+template<class T>
+class TreeNode
+{
+private:
+    T data;
+    TreeNode<T> *left;
+    TreeNode<T> *right;
+public:
+    TreeNode(T d): data(d), left(NULL), right(NULL) {}
+    T get_data () const
+    {
+        return data;
+    }
+    void set_data (T d)
+    {
+        data = d;
+    }
+    TreeNode<T> *get_left () const
+    {
+        return (TreeNode<T> *)left;
+    }
+    void set_left (TreeNode<T> *l)
+    {
+        left = l;
+    }
+    TreeNode<T> *get_right () const
+    {
+        return (TreeNode<T> *)right;
+    }
+    /*TreeNode<T> **get_right_address () const
+    {
+        return (TreeNode<T> **)&right;
+    }*/
+    void set_right (TreeNode<T> *r)
+    {
+        right = r;
+    }
+    void show () const
+    {
+        cout << "data: "<<data<<"\n";
+        cout << "left: "<<left<<"\n";
+        cout << "right: "<<right<<"\n";
+    }
+};
+
+/**
+ * A binarySearchTree abstract class for BinarySearchTree class
+ */
+template<class T>
+class binarySearchTree
+{
+protected:
+    TreeNode<T> *root;
+public:
+    /**
+     * Print preorder traversal of the tree
+     * Format: "4,5,6,7". Data seperate by "," with no spaces between and without quotes
+     */
+    virtual void preorder() = 0;
+
+    /**
+     * Print inorder traversal of the tree
+     * Format: "4,5,6,7". Data seperate by "," with no spaces between and without quotes
+     */
+    virtual void inorder() = 0;
+
+    /**
+     * Print postorder traversal of the tree
+     * Format: "4,5,6,7". Data seperate by "," with no spaces between and without quotes
+     */
+    virtual void postorder() = 0;
+
+    /**
+     * Print levelorder traversal of the tree
+     * Format: "4,5,6,7". Data seperate by "," with no spaces between and without quotes
+     */
+    virtual void levelorder() = 0;
+
+    /**
+     * Insert data into the tree if the value is not present
+     * @param data data to insert
+     * @return true if insert successfully, false if the value is already present
+     */
+    virtual bool insert(T data) = 0;
+
+    /**
+     * Set the value of the root
+     * @param data to set to root
+     */
+    virtual void setRoot(T data) = 0;
+
+    /**
+     * Search the tree for the given value
+     * @param target target to find
+     * @return true if found, false if not found
+     */
+    virtual bool serach(T target) = 0;
+};
+
+template<class T>
+class BinarySearchTree : public binarySearchTree<T>
+{
+    int many;
+    void TLR (TreeNode<T> *n, int *m)
+    {
+        cout << n->get_data();
+        (*m) ++;
+        //printf ("m: %d\n", *m);
+        if (*m != many)
+            cout << ",";
+        else
+            cout << "\n";
+        if (n->get_left() != NULL)
+            TLR (n->get_left(), m);
+        if (n->get_right() != NULL)
+            TLR (n->get_right(), m);
+    }
+    void LTR (TreeNode<T> *n, int *m)
+    {
+        if (n->get_left() != NULL)
+            LTR (n->get_left(), m);
+        cout << n->get_data();
+        (*m) ++;
+        //printf ("m: %d\n", *m);
+        if (*m != many)
+            cout << ",";
+        else
+            cout << "\n";
+        if (n->get_right() != NULL)
+            LTR (n->get_right(), m);
+    }
+    void LRT (TreeNode<T> *n, int *m)
+    {
+        if (n->get_left() != NULL)
+            LRT (n->get_left(), m);
+        if (n->get_right() != NULL)
+            LRT (n->get_right(), m);
+        cout << n->get_data();
+        (*m) ++;
+        //printf ("m: %d\n", *m);
+        if (*m != many)
+            cout << ",";
+        else
+            cout << "\n";
+    }
+public:
+    BinarySearchTree(): many(0) {this->root = NULL;}
+    void preorder()
+    {
+        if (this->root == NULL)
+        {
+            cout << "\n";
+            return;
+        }
+        //printf ("many: %d\n", many);
+        int m=0;
+        TLR (this->root, &m);
+    }
+    void inorder()
+    {
+        if (this->root == NULL)
+        {
+            cout << "\n";
+            return;
+        }
+        int m=0;
+        LTR (this->root, &m);
+
+//        Stack<TreeNode<T> *> s;
+//            TreeNode<T> *tmp;
+//            s.push (this->root);
+//            while (s.top()->get_left() != NULL)
+//                s.push (s.top()->get_left());
+//            while (!s.isEmpty())
+//            {
+//                tmp = s.pop();
+//                cout << tmp->get_data() <<"\t";
+//                if (tmp->get_right() != NULL)
+//                {
+//                    s.push (tmp->get_right());
+//                    while (s.top()->get_left() != NULL)
+//                        s.push (s.top()->get_left());
+//                }
+//            }
+//            return;
+    }
+
+    void postorder()
+    {
+        if (this->root == NULL)
+        {
+            cout << "\n";
+            return;
+        }
+        int m=0;
+        LRT (this->root, &m);
+    }
+    void levelorder()
+    {
+        if (this->root == NULL)
+        {
+            cout << "\n";
+            return;
+        }
+        queue<TreeNode<T> *> q;
+        q.push (this->root);
+        cout<<q.front()->get_data();
+        if (q.front()->get_left() != NULL)
+            q.push (q.front()->get_left());
+        if (q.front()->get_right() != NULL)
+            q.push (q.front()->get_right());
+        q.pop();
+        while (!q.empty())
+        {
+            cout<<","<<q.front()->get_data();
+            if (q.front()->get_left() != NULL)
+                q.push (q.front()->get_left());
+            if (q.front()->get_right() != NULL)
+                q.push (q.front()->get_right());
+            q.pop();
+        }
+        cout << "\n";
+    }
+    bool insert(T data)
+    {
+        if (this->root == NULL)
+        {
+            setRoot (data);
+            return true;
+        }
+        if (serach (data))
+            return false;
+        TreeNode<T> *tmp = this->root, *n = new TreeNode<T>(data);
+        while (1)
+        {
+            if (tmp->get_data() < data)
+            {
+                if (tmp->get_right() == NULL)
+                {
+                    tmp->set_right(n);
+                    many ++;
+                    /*printf ("the data:\n");
+                    n->show();
+                    printf ("insert data: %d right\n\n", tmp->get_data());*/
+                    return true;
+                }
+                tmp = tmp->get_right();
+            }
+            else // == 前面被serach判斷掉了
+            {
+                if (tmp->get_left() == NULL)
+                {
+                    tmp->set_left(n);
+                    many ++;
+                   /* printf ("the data:\n");
+                    n->show();
+                    printf ("insert data: %d left\n\n", tmp->get_data());*/
+                    return true;
+                }
+                tmp = tmp->get_left();
+            }
+        }
+    }
+    void setRoot(T data)
+    {
+        this->root = new TreeNode<T>(data);
+        many ++;
+    }
+    bool serach(T target)
+    {
+        if (this->root == NULL)
+            return false;
+        TreeNode<T> *tmp = this->root;
+        while (tmp != NULL)
+        {
+            if (tmp->get_data() == target)
+                return true;
+            else if (tmp->get_data() < target)
+                tmp = tmp->get_right();
+            else if (tmp->get_data() > target)
+                tmp = tmp->get_left();
+        }
+        return false;
+    }
+
+};
+
+
+int main()
+{
+    BinarySearchTree<int> *bst = new BinarySearchTree<int>();
+    bst->setRoot(41);
+    bst->insert(20);
+    bst->insert(65);
+    bst->insert(11);
+    bst->insert(29);
+    bst->insert(32);
+    bst->insert(50);
+    bst->insert(91);
+    bst->insert(99);
+    bst->insert(72);
+    bst->insert(19);
+    bst->insert(49);
+    bst->insert(64);
+    bst->insert(5);
+    bst->insert(10);
+    bst->insert(1);
+
+    bst->preorder();
+    bst->inorder();
+    bst->postorder();
+    bst->levelorder();
+
+    return 0;
+}
